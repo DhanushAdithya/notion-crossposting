@@ -19,7 +19,7 @@ export const getDatabase = async (): Promise<QueryDatabaseResponse> => {
 					},
 				},
 				{
-					property: 'isPublished',
+					property: 'State',
 					select: {
 						equals: 'Scheduled',
 					},
