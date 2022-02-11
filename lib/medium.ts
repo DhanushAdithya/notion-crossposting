@@ -1,71 +1,62 @@
-export type ClientType = {
-	auth: string;
-	uid: string;
-};
+import type {
+	ClientType,
+	PostType,
+	UserResponse,
+	PostResponse,
+	PublicationResponse,
+	ContributionResponse,
+} from '../types/MediumTypes';
 
-export type UserResponse = {
-	id: string;
-	username: string;
-	name: string;
-	url: string;
-	imageUrl: string;
-};
+class MediumClient {
+	private auth: string;
+	private uid?: string;
+	private publicationId?: string;
+	private apiEndpoint: string = 'https://api.medium.com/v1';
 
-export type PublicationResponse = {
-	id: string;
-	name: string;
-	description: string;
-	url: string;
-	imageUrl: string;
-};
+	constructor(client: ClientType) {
+		this.auth = client.auth;
+		this.uid = client.uid;
+		this.publicationId = client.publicationId;
+	}
 
-export type PubContributionResponse = {
-	publicationId: string;
-	userId: string;
-	role: string;
-};
+	async getUser(): Promise<UserResponse> {
+		const res: UserResponse = await (
+			await fetch(`${this.apiEndpoint}/me`)
+		).json();
+		return res;
+	}
 
-export type PostType = {
-	title: string;
-	contentFormat: 'html' | 'markdown';
-	content: string;
-	tags?: Array<string>;
-	canonicalUrl?: string;
-	publishStatus?: 'public' | 'draft' | 'unlisted';
-	license?:
-		| 'all-rights-reserved'
-		| 'cc-40-by'
-		| 'cc-40-by-sa'
-		| 'cc-40-by-nd'
-		| 'cc-40-by-nc'
-		| 'cc-40-by-nc-nd'
-		| 'cc-40-by-nc-sa'
-		| 'cc-40-zero'
-		| 'public-domain';
-	notifyFollowers?: boolean;
-};
+	async postArticle(
+		data: PostType,
+		isPublication: boolean
+	): Promise<PostResponse> {
+		const route = isPublication
+			? `publications/${this.publicationId}`
+			: `users/${this.uid}`;
+		const res: PostResponse = await (
+			await fetch(`${this.apiEndpoint}/${route}/posts`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${this.auth}`,
+				},
+				body: JSON.stringify(data),
+			})
+		).json();
+		return res;
+	}
 
-export type PostResponse =
-	| {
-			data: {
-				id: string;
-				title: string;
-				authorId: string;
-				tags: Array<string>;
-				url: string;
-				canonicalUrl: string;
-				publishStatus: string;
-				license: string;
-				licenseUrl: string;
-			};
-	  }
-	| {
-			errors: Array<{
-				message: string;
-				code: number;
-			}>;
-	  };
+	async getPublications(): Promise<PublicationResponse> {
+		const res: PublicationResponse = await (
+			await fetch(`${this.apiEndpoint}/users/${this.uid}/publications`)
+		).json();
+		return res;
+	}
 
-const apiEndpoint = 'https://api.medium.com/v1';
-
-const mediumClient = async (options: ClientType) => {};
+	async getContributions(): Promise<ContributionResponse> {
+		const res: ContributionResponse = await (
+			await fetch(`${this.apiEndpoint}/users/${this.uid}/contributors`)
+		).json();
+		return res;
+	}
+}
