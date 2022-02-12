@@ -7,7 +7,7 @@ import type {
 	ContributionResponse,
 } from '../types/MediumTypes';
 
-class MediumClient {
+export class MediumClient {
 	private auth: string;
 	private uid?: string;
 	private publicationId?: string;
@@ -21,7 +21,13 @@ class MediumClient {
 
 	async getUser(): Promise<UserResponse> {
 		const res: UserResponse = await (
-			await fetch(`${this.apiEndpoint}/me`)
+			await fetch(`${this.apiEndpoint}/me`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${this.auth}`,
+				},
+			})
 		).json();
 		return res;
 	}
