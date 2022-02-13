@@ -1,14 +1,14 @@
 export const getDate = (): string => {
-	const date: Date = new Date(Date.now());
-	const dateFormat: string = new Intl.DateTimeFormat('en-ca').format(date);
+	const date = new Date(Date.now());
+	const dateFormat = new Intl.DateTimeFormat('en-ca').format(date);
 	return dateFormat;
 };
 
-class Formatting {
+export class Formatting {
 	text: string;
-	href: string | undefined;
+	href?: string;
 
-	constructor(text: string, href: string | undefined) {
+	constructor(text: string, href?: string) {
 		this.text = text;
 		this.href = href;
 	}
@@ -33,5 +33,3 @@ class Formatting {
 		return this.text;
 	}
 }
-
-export default { Formatting };
