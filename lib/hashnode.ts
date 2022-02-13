@@ -2,8 +2,13 @@ import type {
 	ClientType,
 	CreateStoryResponse,
 	CreateStoryType,
+	UserResponse,
 } from '../types/HashnodeTypes';
-import { createStory, createPublicationStory } from '../types/HashnodeTypes';
+import {
+	userQuery,
+	createStory,
+	createPublicationStory,
+} from '../types/HashnodeTypes';
 
 export class HashnodeClient {
 	private auth: string;
@@ -15,13 +20,29 @@ export class HashnodeClient {
 		this.publicationId = client.publicationId;
 	}
 
+	async getUser(username: string): Promise<UserResponse> {
+		const res: UserResponse = await (
+			await fetch(this.apiEndpoint, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					query: userQuery,
+					variables: { username },
+				}),
+			})
+		).json();
+		return res;
+	}
+
 	async postArticle(
 		input: CreateStoryType,
-		isPublication: boolean,
+		isPublication: boolean = false,
 		hideFromHashnodeFeed: boolean = false
 	): Promise<CreateStoryResponse> {
-		const res = await (
-			await fetch(`${this.apiEndpoint}`, {
+		const res: CreateStoryResponse = await (
+			await fetch(this.apiEndpoint, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
