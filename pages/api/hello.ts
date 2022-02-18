@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { QueryDatabaseResponse } from '@notionhq/client/build/src/api-endpoints';
-import { getDatabase } from '../../lib/notion';
+
+import { MarkDown } from '../../lib/notion';
 
 export default async function handler(
 	_: NextApiRequest,
-	res: NextApiResponse<QueryDatabaseResponse>
+	res: NextApiResponse<Array<string>>
 ) {
-	const response = await getDatabase();
+	const response = await MarkDown();
 	res.status(200).json(response);
 }
