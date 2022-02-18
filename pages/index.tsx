@@ -5,7 +5,7 @@ import styles from '../styles/homepage.module.scss';
 const Home: NextPage = () => {
 	return (
 		<div className='container'>
-			<div className='flex flex-col w-1/2 pl-40 bg-red-200 h-screen justify-center'>
+			<div className='flex flex-col w-1/2 pl-40 h-screen justify-center'>
 				<h1 className='text-7xl font-black mb-1'>
 					Next Level Crossposting with
 					<span className={styles['notion-underline']}>Notion</span>
