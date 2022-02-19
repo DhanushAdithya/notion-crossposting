@@ -6,5 +6,5 @@
 -  [x] Nested Lists
 -  [ ] Strikethrough?
 -  [ ] Underline?
--  [ ] Tables
+-  [x] Tables
 -  [ ] Embeds
