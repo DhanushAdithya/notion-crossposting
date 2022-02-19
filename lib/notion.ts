@@ -52,7 +52,13 @@ const blockContent = async (detail: any): Promise<string> => {
 	const { type, has_children } = detail;
 	const block = detail[type];
 
-	if (has_children) {
+	if (type === 'table') {
+		const tableDivider = new Block(type, block).blockContent();
+		const tableRows = await getBlockObject(detail.id);
+		const rows = tableRows.split('\n');
+		rows.splice(1, 0, tableDivider);
+		return rows.join('\n') + '\n';
+	} else if (has_children) {
 		const parent = new Block(type, block).blockContent();
 		const child = await getBlockObject(detail.id);
 		return (
@@ -79,5 +85,6 @@ const getBlockObject = async (block_id: string): Promise<string> => {
 		const content = await blockContent(block);
 		md.push(content);
 	}
+	console.log(md.join('\n'));
 	return md.join('\n');
 };
