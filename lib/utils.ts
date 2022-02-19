@@ -66,7 +66,7 @@ export class Block {
 			case 'numbered_list_item':
 				return `1. ${this.createText(text)}`;
 			case 'divider':
-				return '***';
+				return '***\n';
 			case 'code':
 				return (
 					'```' +
@@ -74,10 +74,11 @@ export class Block {
 					'\n' +
 					this.createText(text) +
 					'\n' +
-					'```'
+					'```' +
+					'\n'
 				);
 			case 'image':
-				return `![](${this.block.external.url})`;
+				return `![](${this.block.external.url})\n`;
 			default:
 				return '';
 		}
