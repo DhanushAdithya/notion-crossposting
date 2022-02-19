@@ -1,5 +1,8 @@
 import { Client } from '@notionhq/client';
-import { ListBlockChildrenResponse } from '@notionhq/client/build/src/api-endpoints';
+import {
+	ListBlockChildrenResponse,
+	QueryDatabaseResponse,
+} from '@notionhq/client/build/src/api-endpoints';
 
 import { Block, getDate } from './utils';
 
@@ -8,7 +11,7 @@ const notion = new Client({
 });
 
 export const MarkDown = async (): Promise<Array<string>> => {
-	const db = await notion.databases.query({
+	const db: QueryDatabaseResponse = await notion.databases.query({
 		database_id: process.env.NOTION_DATABASE_ID as string,
 		filter: {
 			and: [
@@ -40,27 +43,41 @@ export const MarkDown = async (): Promise<Array<string>> => {
 	const ids = Object.keys(title);
 	const data = [];
 	for (let i = 0; i < ids.length; i++) {
-		const pageData: ListBlockChildrenResponse =
-			await notion.blocks.children.list({
-				block_id: ids[i],
-			});
-		data.push(pageData.results);
+		data.push(await getBlockObject(ids[i]));
 	}
+	return data;
+};
 
-	const markdowns: Array<string> = [];
+const blockContent = async (detail: any): Promise<string> => {
+	const { type, has_children } = detail;
+	const block = detail[type];
 
-	for (let i = 0; i < data.length; i++) {
-		const pageMD: Array<string> = [];
-		for (let j = 0; j < data[i].length; j++) {
-			// @ts-ignore
-			const { type } = data[i][j];
-			// @ts-ignore
-			const block = data[i][j][type];
-			const res = new Block(type, block).blockContent();
-			pageMD.push(res);
-		}
-		markdowns.push(pageMD.join('\n'));
+	if (has_children) {
+		const parent = new Block(type, block).blockContent();
+		const child = await getBlockObject(detail.id);
+		return (
+			parent +
+			'\n' +
+			child
+				.split('\n')
+				.map(str => '  ' + str)
+				.join('\n')
+		);
+	} else {
+		const content = new Block(type, block).blockContent();
+		return content;
 	}
+};
 
-	return markdowns;
+const getBlockObject = async (block_id: string): Promise<string> => {
+	const blockObj: ListBlockChildrenResponse =
+		await notion.blocks.children.list({
+			block_id,
+		});
+	const md = [];
+	for (let block of blockObj.results) {
+		const content = await blockContent(block);
+		md.push(content);
+	}
+	return md.join('\n');
 };
