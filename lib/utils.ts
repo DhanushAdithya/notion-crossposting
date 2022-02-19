@@ -52,19 +52,19 @@ export class Block {
 		const text = this.block.text;
 		switch (this.type) {
 			case 'heading_1':
-				return `# ${this.createText(text)}`;
+				return `# ${this.createText(text)}\n`;
 			case 'heading_2':
-				return `## ${this.createText(text)}`;
+				return `## ${this.createText(text)}\n`;
 			case 'heading_3':
-				return `### ${this.createText(text)}`;
+				return `### ${this.createText(text)}\n`;
 			case 'paragraph':
-				return this.createText(text);
+				return this.createText(text) + '\n';
 			case 'quote':
-				return `> ${this.createText(text)}`;
+				return `> ${this.createText(text)}\n`;
 			case 'bulleted_list_item':
-				return `* ${this.createText(text)}`;
+				return `* ${this.createText(text)}\n`;
 			case 'numbered_list_item':
-				return `1. ${this.createText(text)}`;
+				return `1. ${this.createText(text)}\n`;
 			case 'divider':
 				return '***\n';
 			case 'code':
@@ -79,32 +79,39 @@ export class Block {
 				);
 			case 'image':
 				return `![](${this.block.external.url})\n`;
+			case 'table':
+				return Array(this.block.table_width + 1)
+					.fill('|')
+					.join('---');
+			case 'table_row':
+				return this.createTableRows(this.block.cells);
 			default:
 				return '';
 		}
 	}
 
-	private createText(textArray: ResultType): string {
-		return (
-			textArray
-				.map(part => {
-					const {
-						annotations: { bold, italic, code },
-						text,
-					} = part;
-					let rawText = new Formatting(
-						text.content.trim(),
-						text.link?.url
-					);
-					if (bold) rawText.bold();
-					if (italic) rawText.italic();
-					if (code) rawText.code();
-					if (text.link) rawText.link();
+	private createTableRows(cells: Array<any>): string {
+		const row: Array<string> = [];
+		for (let cell of cells) row.push(this.createText(cell));
+		return '|' + row.join('|') + '|';
+	}
 
-					return rawText.getText;
-				})
-				.join(' ') + '\n'
-		);
+	private createText(textArray: ResultType): string {
+		return textArray
+			.map(part => {
+				const {
+					annotations: { bold, italic, code },
+					text,
+				} = part;
+				let rawText = new Formatting(text.content.trim(), text.link?.url);
+				if (bold) rawText.bold();
+				if (italic) rawText.italic();
+				if (code) rawText.code();
+				if (text.link) rawText.link();
+
+				return rawText.getText;
+			})
+			.join(' ');
 	}
 }
 
