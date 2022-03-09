@@ -49,7 +49,7 @@ export class Block {
 	}
 
 	blockContent(): string {
-		const text = this.block.text;
+		const text = this.block.rich_text;
 		switch (this.type) {
 			case 'heading_1':
 				return `# ${this.createText(text)}\n`;
