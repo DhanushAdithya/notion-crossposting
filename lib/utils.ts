@@ -1,3 +1,5 @@
+import { NOTION_IMAGE_URL } from './constants';
+
 export const getDate = (): string => {
 	const date = new Date(Date.now());
 	const dateFormat = new Intl.DateTimeFormat('en-ca').format(date);
@@ -17,7 +19,10 @@ type BlockTypes =
 	| 'quote'
 	| 'divider'
 	| 'table'
-	| 'table_row';
+	| 'table_row'
+	| 'embed'
+	| 'bookmark'
+	| 'video';
 
 type ResultType = Array<{
 	type: 'text';
@@ -39,13 +44,24 @@ type ResultType = Array<{
 	href: string | null;
 }>;
 
+type Detail = {
+	type: BlockTypes;
+	block: any;
+	site: 'medium' | 'dev.to' | 'hashnode';
+	id: string;
+};
+
 export class Block {
 	private type: BlockTypes;
 	private block: any;
+	private site?: 'medium' | 'dev.to' | 'hashnode';
+	private id: string;
 
-	constructor(type: BlockTypes, block: any) {
-		this.type = type;
-		this.block = block;
+	constructor(detail: Detail) {
+		this.type = detail.type;
+		this.block = detail.block;
+		this.site = detail.site;
+		this.id = detail.id;
 	}
 
 	blockContent(): string {
@@ -78,13 +94,44 @@ export class Block {
 					'\n'
 				);
 			case 'image':
-				return `![](${this.block.external.url})\n`;
+				switch (this.block.type) {
+					case 'external':
+						return `![${this.createText(this.block.caption)}](${
+							this.block.external.url
+						})\n`;
+					default:
+						return `![${this.createText(this.block.caption)}](${
+							NOTION_IMAGE_URL +
+							encodeURIComponent(
+								this.block[this.block.type].url.split('?')[0]
+							) +
+							'?table=block&id=' +
+							this.id
+						})\n`;
+				}
 			case 'table':
 				return Array(this.block.table_width + 1)
 					.fill('|')
 					.join('---');
 			case 'table_row':
 				return this.createTableRows(this.block.cells);
+			case 'embed':
+			case 'bookmark':
+			case 'video':
+				switch (this.site) {
+					case 'dev.to':
+						return `{% embed ${
+							this.block[this.block.type]?.url ?? this.block.url
+						} %}\n`;
+					case 'hashnode':
+						return `%[${
+							this.block[this.block.type]?.url ?? this.block.url
+						}]\n`;
+					default:
+						return `[](${
+							this.block[this.block.type]?.url ?? this.block.url
+						})\n`;
+				}
 			default:
 				return '';
 		}
