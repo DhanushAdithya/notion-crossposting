@@ -66,8 +66,14 @@ class NotionClient {
 		const { type, has_children, id } = detail;
 		const block = detail[type];
 
+		const parent = new Block({
+			type,
+			id,
+			block,
+			site: 'medium',
+		}).blockContent();
+
 		if (has_children) {
-			const parent = new Block(type, block).blockContent();
 			const child = await this.getMarkdown(id);
 			if (type === 'table') {
 				const rows = child.split('\n');
@@ -84,8 +90,7 @@ class NotionClient {
 				);
 			}
 		} else {
-			const content = new Block(type, block).blockContent();
-			return content;
+			return parent;
 		}
 	}
 
@@ -99,7 +104,7 @@ class NotionClient {
 			md.push(await this.getBlockContent(block));
 		}
 		console.log(md.join('\n'));
-		return md.join('\n');
+		return md.join('\n').trim();
 	}
 }
 
