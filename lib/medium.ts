@@ -6,12 +6,13 @@ import type {
 	PublicationResponse,
 	ContributionResponse,
 } from '../types/MediumTypes';
+import { MEDIUM_API_ENDPOINT } from './constants';
 
 export class MediumClient {
 	private auth: string;
 	private uid?: string;
 	private publicationId?: string;
-	private apiEndpoint: string = 'https://api.medium.com/v1';
+	private apiEndpoint = MEDIUM_API_ENDPOINT;
 
 	constructor(client: ClientType) {
 		this.auth = client.auth;

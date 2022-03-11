@@ -9,11 +9,12 @@ import {
 	createStory,
 	createPublicationStory,
 } from '../types/HashnodeTypes';
+import { HASHNODE_API_ENDPOINT } from './constants';
 
 export class HashnodeClient {
 	private auth: string;
 	private publicationId?: string;
-	private apiEndpoint: string = 'https://api.hashnode.com';
+	private apiEndpoint = HASHNODE_API_ENDPOINT;
 
 	constructor(client: ClientType) {
 		this.auth = client.auth;

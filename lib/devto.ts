@@ -1,8 +1,13 @@
-import { ArticleResponse, ArticleType, UserType } from '../types/DevtoTypes';
+import type {
+	ArticleResponse,
+	ArticleType,
+	UserType,
+} from '../types/DevtoTypes';
+import { DEVTO_API_ENDPOINT } from './constants';
 
 export class DevtoClient {
 	private auth: string;
-	private apiEndpoint: string = 'https://dev.to/api';
+	private apiEndpoint = DEVTO_API_ENDPOINT;
 
 	constructor(client: { auth: string }) {
 		this.auth = client.auth;
