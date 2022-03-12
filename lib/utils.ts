@@ -1,9 +1,93 @@
-import { NOTION_IMAGE_URL } from './constants';
+import {
+	CODEPEN_FORMAT,
+	CODESANDBOX_FORMAT,
+	DEVTO_COMMENT_FORMAT,
+	DEVTO_POST_FORMAT,
+	DEVTO_USER_FORMAT,
+	GIST_FORMAT,
+	GITHUB_FORMAT,
+	GLITCH_FORMAT,
+	IMAGE_FORMAT,
+	MEDIUM_FORMAT,
+	REDDIT_FORMAT,
+	REPLIT_FORMAT,
+	STACKBLITZ_FORMAT,
+	STACKOVERFLOW_FORMAT,
+	TWITTER_FORMAT,
+	VIMEO_FORMAT,
+	WIKIPEDIA_FORMAT,
+	YOUTUBE_FORMAT,
+} from './constants';
 
 export const getDate = (): string => {
 	const date = new Date(Date.now());
 	const dateFormat = new Intl.DateTimeFormat('en-ca').format(date);
 	return dateFormat;
+};
+
+const createImageUrl = async (url: string): Promise<string> => {
+	if (IMAGE_FORMAT.test(url)) {
+		return url;
+	} else {
+		const { secure_url, format } = await (
+			await fetch(
+				`https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						api_key: process.env.CLOUDINARY_API_KEY,
+						file: url,
+						upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET,
+					}),
+				}
+			)
+		).json();
+		return secure_url.replace(new RegExp(`\.(${format})$`), '.png');
+	}
+};
+
+const createEmbed = (url: string): string => {
+	switch (true) {
+		case YOUTUBE_FORMAT.test(url):
+			return `{% youtube ${url.replace(YOUTUBE_FORMAT, '$1')} %}\n`;
+		case VIMEO_FORMAT.test(url):
+			return `{% vimeo ${url.replace(VIMEO_FORMAT, '$1')} %}\n`;
+		case CODESANDBOX_FORMAT.test(url):
+			return `{% codesandbox ${url.replace(CODESANDBOX_FORMAT, '$1')} %}\n`;
+		case DEVTO_USER_FORMAT.test(url):
+			return `{% user ${url.replace(DEVTO_USER_FORMAT, '$1')} %}\n`;
+		case DEVTO_POST_FORMAT.test(url):
+			return `{% link ${url.replace(DEVTO_POST_FORMAT, '$1')} %}\n`;
+		case DEVTO_COMMENT_FORMAT.test(url):
+			return `{% devcomment ${url.replace(DEVTO_COMMENT_FORMAT, '$1')} %}\n`;
+		case GIST_FORMAT.test(url):
+			return `{% gist ${url.replace(GIST_FORMAT, '$1')} %}\n`;
+		case STACKBLITZ_FORMAT.test(url):
+			return `{% stackblitz ${url.replace(STACKBLITZ_FORMAT, '$1')} %}\n`;
+		case MEDIUM_FORMAT.test(url):
+			return `{% medium ${url.replace(MEDIUM_FORMAT, '$1')} %}\n`;
+		case TWITTER_FORMAT.test(url):
+			return `{% twitter ${url.replace(TWITTER_FORMAT, '$1')} %}\n`;
+		case GLITCH_FORMAT.test(url):
+			return `{% glitch ${url.replace(GLITCH_FORMAT, '$1')} %}\n`;
+		case REPLIT_FORMAT.test(url):
+			return `{% replit ${url.replace(REPLIT_FORMAT, '$1')} %}\n`;
+		case REDDIT_FORMAT.test(url):
+			return `{% reddit ${url} %}\n`;
+		case CODEPEN_FORMAT.test(url):
+			return `{% codepen ${url} %}\n`;
+		case GITHUB_FORMAT.test(url):
+			return `{% github ${url} %}\n`;
+		case STACKOVERFLOW_FORMAT.test(url):
+			return `{% stackoverflow ${url} %}\n`;
+		case WIKIPEDIA_FORMAT.test(url):
+			return `{% wikipedia ${url} %}\n`;
+		default:
+			return `[${url}](${url})`;
+	}
 };
 
 type BlockTypes =
@@ -64,7 +148,7 @@ export class Block {
 		this.id = detail.id;
 	}
 
-	blockContent(): string {
+	async blockContent(): Promise<string> {
 		const text = this.block.rich_text;
 		switch (this.type) {
 			case 'heading_1':
@@ -94,21 +178,9 @@ export class Block {
 					'\n'
 				);
 			case 'image':
-				switch (this.block.type) {
-					case 'external':
-						return `![${this.createText(this.block.caption)}](${
-							this.block.external.url
-						})\n`;
-					default:
-						return `![${this.createText(this.block.caption)}](${
-							NOTION_IMAGE_URL +
-							encodeURIComponent(
-								this.block[this.block.type].url.split('?')[0]
-							) +
-							'?table=block&id=' +
-							this.id
-						})\n`;
-				}
+				return `![${this.createText(
+					this.block.caption
+				)}](${await createImageUrl(this.block[this.block.type].url)})\n`;
 			case 'table':
 				return Array(this.block.table_width + 1)
 					.fill('|')
@@ -120,17 +192,17 @@ export class Block {
 			case 'video':
 				switch (this.site) {
 					case 'dev.to':
-						return `{% embed ${
+						return createEmbed(
 							this.block[this.block.type]?.url ?? this.block.url
-						} %}\n`;
+						);
 					case 'hashnode':
 						return `%[${
 							this.block[this.block.type]?.url ?? this.block.url
 						}]\n`;
 					default:
-						return `[](${
-							this.block[this.block.type]?.url ?? this.block.url
-						})\n`;
+						const url =
+							this.block[this.block.type]?.url ?? this.block.url;
+						return `[${url}](${url})\n`;
 				}
 			default:
 				return '';
