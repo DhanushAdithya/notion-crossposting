@@ -78,15 +78,18 @@ const createEmbed = (url: string): string => {
 		case REDDIT_FORMAT.test(url):
 			return `{% reddit ${url} %}\n`;
 		case CODEPEN_FORMAT.test(url):
-			return `{% codepen ${url} %}\n`;
+			return `{% codepen ${url.replace(CODEPEN_FORMAT, '$1')} %}\n`;
 		case GITHUB_FORMAT.test(url):
-			return `{% github ${url} %}\n`;
+			return `{% github ${url.replace(GITHUB_FORMAT, '$1')} %}\n`;
 		case STACKOVERFLOW_FORMAT.test(url):
-			return `{% stackoverflow ${url} %}\n`;
+			return `{% stackoverflow ${url.replace(
+				STACKOVERFLOW_FORMAT,
+				'$1'
+			)} %}\n`;
 		case WIKIPEDIA_FORMAT.test(url):
-			return `{% wikipedia ${url} %}\n`;
+			return `{% wikipedia ${url.replace(WIKIPEDIA_FORMAT, '$1')} %}\n`;
 		default:
-			return `[${url}](${url})`;
+			return `[${url}](${url})\n`;
 	}
 };
 
