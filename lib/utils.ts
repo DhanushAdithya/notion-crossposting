@@ -55,7 +55,8 @@ type BlockTypes =
 	| 'table_row'
 	| 'embed'
 	| 'bookmark'
-	| 'video';
+	| 'video'
+	| 'equation';
 
 type RichTextType = Array<{
 	type: 'text' | 'mention' | 'equation';
@@ -125,9 +126,7 @@ export class Block {
 					this.block.language +
 					'\n' +
 					this.createText(text) +
-					'\n' +
-					'```' +
-					'\n'
+					'\n```\n'
 				);
 			case 'image':
 				return `![${this.createText(
@@ -155,6 +154,25 @@ export class Block {
 						const url =
 							this.block[this.block.type]?.url ?? this.block.url;
 						return `[${url}](${url})\n`;
+				}
+			case 'equation':
+				switch (this.site) {
+					case 'dev.to':
+						return (
+							'{% katex %}\n' +
+							this.block.expression +
+							'\n{% endkatex %}\n'
+						);
+					case 'hashnode':
+						return '$$\n' + this.block.expression + '\n$$\n';
+					default:
+						return `![${this.block.expression.replace(
+							'\n',
+							' '
+						)}](${await createImageUrl(
+							'https://math.vercel.app?from=' +
+								this.block.expression.replace('\n', ' ')
+						)})`;
 				}
 			default:
 				return '';
