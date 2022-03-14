@@ -1,23 +1,4 @@
-import {
-	CODEPEN_FORMAT,
-	CODESANDBOX_FORMAT,
-	DEVTO_COMMENT_FORMAT,
-	DEVTO_POST_FORMAT,
-	DEVTO_USER_FORMAT,
-	GIST_FORMAT,
-	GITHUB_FORMAT,
-	GLITCH_FORMAT,
-	IMAGE_FORMAT,
-	MEDIUM_FORMAT,
-	REDDIT_FORMAT,
-	REPLIT_FORMAT,
-	STACKBLITZ_FORMAT,
-	STACKOVERFLOW_FORMAT,
-	TWITTER_FORMAT,
-	VIMEO_FORMAT,
-	WIKIPEDIA_FORMAT,
-	YOUTUBE_FORMAT,
-} from './constants';
+import { IMAGE_FORMAT, EMBED_REGEXS } from './constants';
 
 export const getDate = (): string => {
 	const date = new Date(Date.now());
@@ -50,47 +31,12 @@ const createImageUrl = async (url: string): Promise<string> => {
 };
 
 const createEmbed = (url: string): string => {
-	switch (true) {
-		case YOUTUBE_FORMAT.test(url):
-			return `{% youtube ${url.replace(YOUTUBE_FORMAT, '$1')} %}\n`;
-		case VIMEO_FORMAT.test(url):
-			return `{% vimeo ${url.replace(VIMEO_FORMAT, '$1')} %}\n`;
-		case CODESANDBOX_FORMAT.test(url):
-			return `{% codesandbox ${url.replace(CODESANDBOX_FORMAT, '$1')} %}\n`;
-		case DEVTO_USER_FORMAT.test(url):
-			return `{% user ${url.replace(DEVTO_USER_FORMAT, '$1')} %}\n`;
-		case DEVTO_POST_FORMAT.test(url):
-			return `{% link ${url.replace(DEVTO_POST_FORMAT, '$1')} %}\n`;
-		case DEVTO_COMMENT_FORMAT.test(url):
-			return `{% devcomment ${url.replace(DEVTO_COMMENT_FORMAT, '$1')} %}\n`;
-		case GIST_FORMAT.test(url):
-			return `{% gist ${url.replace(GIST_FORMAT, '$1')} %}\n`;
-		case STACKBLITZ_FORMAT.test(url):
-			return `{% stackblitz ${url.replace(STACKBLITZ_FORMAT, '$1')} %}\n`;
-		case MEDIUM_FORMAT.test(url):
-			return `{% medium ${url.replace(MEDIUM_FORMAT, '$1')} %}\n`;
-		case TWITTER_FORMAT.test(url):
-			return `{% twitter ${url.replace(TWITTER_FORMAT, '$1')} %}\n`;
-		case GLITCH_FORMAT.test(url):
-			return `{% glitch ${url.replace(GLITCH_FORMAT, '$1')} %}\n`;
-		case REPLIT_FORMAT.test(url):
-			return `{% replit ${url.replace(REPLIT_FORMAT, '$1')} %}\n`;
-		case REDDIT_FORMAT.test(url):
-			return `{% reddit ${url} %}\n`;
-		case CODEPEN_FORMAT.test(url):
-			return `{% codepen ${url.replace(CODEPEN_FORMAT, '$1')} %}\n`;
-		case GITHUB_FORMAT.test(url):
-			return `{% github ${url.replace(GITHUB_FORMAT, '$1')} %}\n`;
-		case STACKOVERFLOW_FORMAT.test(url):
-			return `{% stackoverflow ${url.replace(
-				STACKOVERFLOW_FORMAT,
-				'$1'
-			)} %}\n`;
-		case WIKIPEDIA_FORMAT.test(url):
-			return `{% wikipedia ${url.replace(WIKIPEDIA_FORMAT, '$1')} %}\n`;
-		default:
-			return `[${url}](${url})\n`;
+	for (const [embedType, regex] of Object.entries(EMBED_REGEXS)) {
+		if (regex.test(url))
+			return `{% ${embedType} ${url.replace(regex, '$1')} %}\n`;
 	}
+
+	return `[${url}](${url})\n`;
 };
 
 type BlockTypes =
@@ -111,13 +57,16 @@ type BlockTypes =
 	| 'bookmark'
 	| 'video';
 
-type ResultType = Array<{
-	type: 'text';
+type RichTextType = Array<{
+	type: 'text' | 'mention' | 'equation';
 	text: {
 		content: string;
 		link: {
 			url: string;
 		} | null;
+	};
+	equation: {
+		expression: string;
 	};
 	annotations: {
 		bold: boolean;
@@ -218,32 +167,38 @@ export class Block {
 		return '|' + row.join('|') + '|';
 	}
 
-	private createText(textArray: ResultType): string {
+	private createText(textArray: RichTextType): string {
 		return textArray
 			.map(part => {
 				const {
 					annotations: { bold, italic, code },
-					text,
+					type,
 				} = part;
-				let rawText = new Formatting(text.content.trim(), text.link?.url);
-				if (bold) rawText.bold();
-				if (italic) rawText.italic();
-				if (code) rawText.code();
-				if (text.link) rawText.link();
-
-				return rawText.getText;
+				switch (type) {
+					case 'text':
+						const { text } = part;
+						let rawText = new Formatting(text.content.trim());
+						if (bold) rawText.bold();
+						if (italic) rawText.italic();
+						if (code) rawText.code();
+						if (text.link) rawText.link(text.link.url);
+						return rawText.getText;
+					case 'equation':
+						return part.plain_text;
+					default:
+						return '';
+				}
 			})
-			.join(' ');
+			.join(' ')
+			.trim();
 	}
 }
 
 class Formatting {
 	text: string;
-	href?: string;
 
-	constructor(text: string, href?: string) {
+	constructor(text: string) {
 		this.text = text;
-		this.href = href;
 	}
 
 	bold(): void {
@@ -258,8 +213,8 @@ class Formatting {
 		this.text = `\`${this.text}\``;
 	}
 
-	link(): void {
-		this.text = `[${this.text}](${this.href})`;
+	link(href: string): void {
+		this.text = `[${this.text}](${href})`;
 	}
 
 	get getText() {
