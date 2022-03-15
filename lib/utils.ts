@@ -35,7 +35,6 @@ const createEmbed = (url: string): string => {
 		if (regex.test(url))
 			return `{% ${embedType} ${url.replace(regex, '$1')} %}\n`;
 	}
-
 	return `[${url}](${url})\n`;
 };
 
@@ -48,7 +47,6 @@ type BlockTypes =
 	| 'numbered_list_item'
 	| 'code'
 	| 'image'
-	| 'video'
 	| 'quote'
 	| 'divider'
 	| 'table'
@@ -56,7 +54,8 @@ type BlockTypes =
 	| 'embed'
 	| 'bookmark'
 	| 'video'
-	| 'equation';
+	| 'equation'
+	| 'callout';
 
 type RichTextType = Array<{
 	type: 'text' | 'mention' | 'equation';
@@ -81,17 +80,19 @@ type RichTextType = Array<{
 	href: string | null;
 }>;
 
+type Sites = 'medium' | 'dev.to' | 'hashnode';
+
 type Detail = {
 	type: BlockTypes;
 	block: any;
-	site: 'medium' | 'dev.to' | 'hashnode';
+	site: Sites;
 	id: string;
 };
 
 export class Block {
 	private type: BlockTypes;
 	private block: any;
-	private site?: 'medium' | 'dev.to' | 'hashnode';
+	private site: Sites;
 	private id: string;
 
 	constructor(detail: Detail) {
@@ -102,7 +103,7 @@ export class Block {
 	}
 
 	async blockContent(): Promise<string> {
-		const text = this.block.rich_text;
+		const text: RichTextType = this.block.rich_text;
 		switch (this.type) {
 			case 'heading_1':
 				return `# ${this.createText(text)}\n`;
@@ -174,6 +175,10 @@ export class Block {
 								this.block.expression.replace('\n', ' ')
 						)})`;
 				}
+			case 'callout':
+				return `> ${this.block.icon.emoji}\n> ${this.createText(
+					text
+				).replace('\n', ' ')}`;
 			default:
 				return '';
 		}
@@ -189,7 +194,7 @@ export class Block {
 		return textArray
 			.map(part => {
 				const {
-					annotations: { bold, italic, code },
+					annotations: { bold, italic, code, strikethrough, underline },
 					type,
 				} = part;
 				switch (type) {
@@ -198,11 +203,15 @@ export class Block {
 						let rawText = new Formatting(text.content.trim());
 						if (bold) rawText.bold();
 						if (italic) rawText.italic();
+						if (strikethrough) rawText.strikethrough(this.site);
+						if (underline) rawText.underline(this.site);
 						if (code) rawText.code();
 						if (text.link) rawText.link(text.link.url);
 						return rawText.getText;
 					case 'equation':
-						return part.plain_text;
+						const rawEquation = new Formatting(part.plain_text.trim());
+						rawEquation.code();
+						return rawEquation.getText;
 					default:
 						return '';
 				}
@@ -225,6 +234,22 @@ class Formatting {
 
 	italic(): void {
 		this.text = `*${this.text}*`;
+	}
+
+	strikethrough(site: Sites): void {
+		if (site === 'medium' || site === 'hashnode') {
+			this.text = this.text.split('').join('\u0336') + '\u0336';
+		} else {
+			this.text = `~~${this.text}~~`;
+		}
+	}
+
+	underline(site: Sites): void {
+		if (site === 'medium' || site === 'hashnode') {
+			this.text = this.text.split('').join('\u0332') + '\u0332';
+		} else {
+			this.text = `<u>${this.text}</u>`;
+		}
 	}
 
 	code(): void {
