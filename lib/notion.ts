@@ -41,20 +41,60 @@ class NotionClient {
 			},
 		});
 
-		const title: { [k: string]: string } = pages.results.reduce(
-			(acc: { [k: string]: string }, val) => {
+		const properties = pages.results.map(result => {
+			const {
+				id, // @ts-ignore
+				//cover: {
+				//external: { url: coverImage },
+				//},
 				// @ts-ignore
-				acc[val.id] = val.properties.Name.title.reduce(
-					// @ts-ignore
-					(acc, val) => acc + val.plain_text,
-					''
-				);
-				return acc;
-			},
-			{}
-		);
+				properties: {
+					//Series: {
+					//select: { name: series },
+					//},
+					Sites: { multi_select: sites },
+					Tags: { multi_select: tags },
+					'Canonical URL': { url: canonicalUrl },
+					//Republished: {
+					//select: { name: republished },
+					//},
+					Brief: { rich_text: brief },
+					Name: { title },
+				},
+			} = result;
 
-		const ids = Object.keys(title);
+			return {
+				id,
+				// @ts-ignore
+				title: title.reduce((acc, val) => acc + val.plain_text, ''),
+				//coverImage,
+				//series,
+				sites: sites.map((site: any) => site.name),
+				tags: tags.map((tag: any) => tag.name),
+				canonicalUrl,
+				//republished: republished === 'true' ? true : false,
+				// @ts-ignore
+				brief: brief.reduce((acc, val) => acc + val.plain_text, ''),
+			};
+		});
+
+		console.log(properties);
+
+		//const title: { [k: string]: string } = pages.results.reduce(
+		//(acc: { [k: string]: string }, val) => {
+		//// @ts-ignore
+		//acc[val.id] = val.properties.Name.title.reduce(
+		//// @ts-ignore
+		//(acc, val) => acc + val.plain_text,
+		//''
+		//);
+		//return acc;
+		//},
+		//{}
+		//);
+
+		//const ids = Object.keys(title);
+		const ids = properties.map(property => property.id);
 		const data = [];
 		for (let id of ids) {
 			data.push(await this.getMarkdown(id));
@@ -70,18 +110,18 @@ class NotionClient {
 			type,
 			id,
 			block,
-			site: 'medium',
+			site: 'hashnode',
 		}).blockContent();
 
 		if (has_children) {
 			const child = await this.getMarkdown(id);
 			if (type === 'table') {
 				const rows = child.split('\n');
-				rows.splice(1, 0, parent);
+				rows.splice(1, 0, await parent);
 				return rows.join('\n') + '\n';
 			} else {
 				return (
-					parent +
+					(await parent) +
 					'\n' +
 					child
 						.split('\n')
