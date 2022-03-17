@@ -2,6 +2,7 @@ import { Client } from '@notionhq/client';
 import {
 	ListBlockChildrenResponse,
 	QueryDatabaseResponse,
+	SearchResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 
 import { Block, getDate } from './utils';
@@ -18,6 +19,26 @@ class NotionClient {
 	constructor(client: NotionClientType) {
 		this.notion = new Client({ auth: client.auth });
 		this.database_id = client.database_id;
+	}
+
+	async getDatabase(): Promise<{
+		id: string;
+		title: string;
+	}> {
+		const response: SearchResponse = await this.notion.search({
+			filter: {
+				property: 'object',
+				value: 'database',
+			},
+		});
+
+		const database = response.results[0];
+
+		return {
+			id: database.id,
+			// @ts-ignore
+			title: database.title.reduce((acc, val) => acc + val, ''),
+		};
 	}
 
 	async getObject(): Promise<Array<string>> {
@@ -78,22 +99,6 @@ class NotionClient {
 			};
 		});
 
-		console.log(properties);
-
-		//const title: { [k: string]: string } = pages.results.reduce(
-		//(acc: { [k: string]: string }, val) => {
-		//// @ts-ignore
-		//acc[val.id] = val.properties.Name.title.reduce(
-		//// @ts-ignore
-		//(acc, val) => acc + val.plain_text,
-		//''
-		//);
-		//return acc;
-		//},
-		//{}
-		//);
-
-		//const ids = Object.keys(title);
 		const ids = properties.map(property => property.id);
 		const data = [];
 		for (let id of ids) {
