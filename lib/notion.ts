@@ -37,7 +37,7 @@ class NotionClient {
 		return {
 			id: database.id,
 			// @ts-ignore
-			title: database.title.reduce((acc, val) => acc + val, ''),
+			title: database.title.reduce((acc, val) => acc + val.plain_text, ''),
 		};
 	}
 
