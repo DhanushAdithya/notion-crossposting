@@ -27,7 +27,15 @@ const Contact: NextPage = () => {
 		e: FormEvent<HTMLFormElement>
 	): Promise<void> => {
 		e.preventDefault();
-		console.log(form);
+		const response: {
+			msg: 'success' | 'error';
+		} = await (
+			await fetch('/api/contact', {
+				method: 'POST',
+				body: JSON.stringify(form),
+			})
+		).json();
+		console.log(response.msg);
 	};
 
 	return (
