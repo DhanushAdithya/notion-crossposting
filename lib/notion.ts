@@ -41,7 +41,19 @@ class NotionClient {
 		};
 	}
 
-	async getObject(): Promise<Array<string>> {
+	async getObject(): Promise<
+		Array<{
+			id: string;
+			title: string;
+			coverImage: any;
+			republished: boolean;
+			brief: string;
+			tags: Array<string>;
+			series: any;
+			canonicalUrl: string;
+			content: string;
+		}>
+	> {
 		const pages: QueryDatabaseResponse = await this.notion.databases.query({
 			database_id: this.database_id,
 			filter: {
@@ -64,47 +76,57 @@ class NotionClient {
 
 		const properties = pages.results.map(result => {
 			const {
-				id, // @ts-ignore
-				//cover: {
-				//external: { url: coverImage },
-				//},
+				id,
+				// @ts-ignore
+				cover,
 				// @ts-ignore
 				properties: {
-					//Series: {
-					//select: { name: series },
-					//},
+					Series: { select: seriesSelect },
+					Republished: { select: republishedSelect },
 					Sites: { multi_select: sites },
 					Tags: { multi_select: tags },
 					'Canonical URL': { url: canonicalUrl },
-					//Republished: {
-					//select: { name: republished },
-					//},
 					Brief: { rich_text: brief },
 					Name: { title },
 				},
 			} = result;
+			// @ts-ignore
+			const coverImage = cover?.external?.url;
+			// @ts-ignore
+			const series = seriesSelect?.name;
+			// @ts-ignore
+			const republished = republishedSelect?.name;
 
 			return {
 				id,
-				// @ts-ignore
-				title: title.reduce((acc, val) => acc + val.plain_text, ''),
-				//coverImage,
-				//series,
-				sites: sites.map((site: any) => site.name),
-				tags: tags.map((tag: any) => tag.name),
-				canonicalUrl,
-				//republished: republished === 'true' ? true : false,
-				// @ts-ignore
-				brief: brief.reduce((acc, val) => acc + val.plain_text, ''),
+				title: title.reduce(
+					(acc: string, val: { plain_text: string }) =>
+						acc + val.plain_text,
+					''
+				) as string,
+				coverImage: coverImage ?? '',
+				series: series ?? '',
+				sites: sites.map((site: any) => site.name) as Array<string>,
+				tags: tags.map((tag: any) => tag.name) as Array<string>,
+				canonicalUrl: canonicalUrl as string,
+				republished: republished === 'true' ? true : false,
+				brief: brief.reduce(
+					(acc: string, val: { plain_text: string }) =>
+						acc + val.plain_text,
+					''
+				) as string,
 			};
 		});
 
 		const ids = properties.map(property => property.id);
-		const data = [];
+		const data: Array<string> = [];
 		for (let id of ids) {
 			data.push(await this.getMarkdown(id));
 		}
-		return data;
+		return properties.map((property, i) => ({
+			...property,
+			content: data[i],
+		}));
 	}
 
 	private async getBlockContent(detail: any): Promise<string> {
@@ -148,7 +170,6 @@ class NotionClient {
 		for (let block of blockObj.results) {
 			md.push(await this.getBlockContent(block));
 		}
-		console.log(md.join('\n'));
 		return md.join('\n').trim();
 	}
 }
@@ -158,6 +179,18 @@ const notion = new NotionClient({
 	database_id: process.env.NOTION_DATABASE_ID as string,
 });
 
-export const MarkDown = async (): Promise<Array<string>> => {
+export const MarkDown = async (): Promise<
+	Array<{
+		id: string;
+		title: string;
+		coverImage: any;
+		republished: boolean;
+		brief: string;
+		tags: Array<string>;
+		series: any;
+		canonicalUrl: string;
+		content: string;
+	}>
+> => {
 	return notion.getObject();
 };
