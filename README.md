@@ -4,20 +4,25 @@
 
 -  [x] Paragraphs
 -  [x] Text Formatting
+   -  [x] Bold
+   -  [x] Italic
+   -  [x] Inline Code
+   -  [x] Strikethrough
+   -  [x] Underline
 -  [x] Headings
 -  [x] Lists
-    -  [x] Nested Lists
+   -  [x] Nested Lists
 -  [x] Quotes
 -  [x] Divider
 -  [x] Images
-    -  [x] Alt Texts
-    -  [x] External Images
+   -  [x] Alt Texts
+   -  [x] External Images
 -  [x] Code Blocks
 -  [x] Equations
-    -  [x] Medium (Converted to Images)
-    -  [x] Dev.to & Hashnode
+   -  [x] Medium (Converted to Images)
+   -  [x] Dev.to & Hashnode
 -  [x] Callouts (Converted to Quotes with the Emoji)
 -  [x] Tables
-    -  [x] Dev.to & Hashnode
-    -  [ ] Medium
+   -  [x] Dev.to & Hashnode
+   -  [ ] Medium
 -  [x] Embeds
