@@ -26,7 +26,7 @@ export default async function handler(
 							title: [
 								{
 									text: {
-										content: name,
+										content: name || 'Anonymous',
 									},
 								},
 							],
@@ -56,7 +56,7 @@ export default async function handler(
 						},
 						Type: {
 							select: {
-								name: type,
+								name: type || 'Query',
 							},
 						},
 					},
