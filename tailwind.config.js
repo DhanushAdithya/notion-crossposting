@@ -4,7 +4,12 @@ module.exports = {
 		//'./components/**/*.{js,ts,jsx,tsx}',
 	],
 	theme: {
-		extend: {},
+		extend: {
+            fontFamily: {
+                raleway: ['Poppins'],
+                dm: ['DM Serif Display']
+            }
+        },
 	},
 	plugins: [],
 };
