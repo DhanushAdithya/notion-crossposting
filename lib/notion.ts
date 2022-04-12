@@ -21,6 +21,63 @@ class NotionClient {
 		this.database_id = client.database_id;
 	}
 
+	async getPublished(): Promise<
+		Array<{
+			id: string;
+			title: string;
+			coverImage: any;
+			republished: boolean;
+			brief: string;
+			tags: Array<string>;
+			series: any;
+			canonicalUrl: string;
+		}>
+	> {
+		const pages = await this.getPage('Published');
+		const properties = pages.results.map(result =>
+			this.getPageDetails(result)
+		);
+		return properties;
+	}
+
+	async getDraft(): Promise<
+		Array<{
+			id: string;
+			title: string;
+			coverImage: any;
+			republished: boolean;
+			brief: string;
+			tags: Array<string>;
+			series: any;
+			canonicalUrl: string;
+		}>
+	> {
+		const pages = await this.getPage('Draft');
+		const properties = pages.results.map(result =>
+			this.getPageDetails(result)
+		);
+		return properties;
+	}
+
+	async getScheduled(): Promise<
+		Array<{
+			id: string;
+			title: string;
+			coverImage: any;
+			republished: boolean;
+			brief: string;
+			tags: Array<string>;
+			series: any;
+			canonicalUrl: string;
+		}>
+	> {
+		const pages = await this.getPage('Scheduled');
+		const properties = pages.results.map(result =>
+			this.getPageDetails(result)
+		);
+		return properties;
+	}
+
 	async getDatabase(): Promise<{
 		id: string;
 		title: string;
@@ -41,6 +98,87 @@ class NotionClient {
 		};
 	}
 
+	private getPageDetails(result: any): {
+		id: string;
+		title: string;
+		coverImage: string;
+		series: string;
+		sites: Array<string>;
+		tags: Array<string>;
+		canonicalUrl: string;
+		republished: boolean;
+		brief: string;
+	} {
+		const {
+			id,
+			cover,
+			properties: {
+				Series: { select: seriesSelect },
+				Republished: { select: republishedSelect },
+				Sites: { multi_select: sites },
+				Tags: { multi_select: tags },
+				'Canonical URL': { url: canonicalUrl },
+				Brief: { rich_text: brief },
+				Name: { title },
+			},
+		} = result;
+		const coverImage = cover?.external?.url;
+		const series = seriesSelect?.name;
+		const republished = republishedSelect?.name;
+
+		return {
+			id,
+			title: title.reduce(
+				(acc: string, val: { plain_text: string }) => acc + val.plain_text,
+				''
+			),
+			coverImage: coverImage ?? '',
+			series: series ?? '',
+			sites: sites.map((site: any) => site.name) as Array<string>,
+			tags: tags.map((tag: any) => tag.name) as Array<string>,
+			canonicalUrl: canonicalUrl as string,
+			republished: republished === 'true' ? true : false,
+			brief: brief.reduce(
+				(acc: string, val: { plain_text: string }) => acc + val.plain_text,
+				''
+			),
+		};
+	}
+
+	private async getPage(
+		state: 'Published' | 'Draft' | 'Scheduled',
+		today: boolean = false
+	): Promise<QueryDatabaseResponse> {
+		const pages = await this.notion.databases.query({
+			database_id: this.database_id,
+			filter: today
+				? {
+						and: [
+							{
+								property: 'Date',
+								date: {
+									equals: getDate(),
+								},
+							},
+							{
+								property: 'State',
+								select: {
+									equals: state,
+								},
+							},
+						],
+				  }
+				: {
+						property: 'State',
+						select: {
+							equals: state,
+						},
+				  },
+		});
+
+		return pages;
+	}
+
 	async getObject(): Promise<
 		Array<{
 			id: string;
@@ -54,69 +192,10 @@ class NotionClient {
 			content: string;
 		}>
 	> {
-		const pages: QueryDatabaseResponse = await this.notion.databases.query({
-			database_id: this.database_id,
-			filter: {
-				and: [
-					{
-						property: 'Date',
-						date: {
-							equals: getDate(),
-						},
-					},
-					{
-						property: 'State',
-						select: {
-							equals: 'Scheduled',
-						},
-					},
-				],
-			},
-		});
-
-		const properties = pages.results.map(result => {
-			const {
-				id,
-				// @ts-ignore
-				cover,
-				// @ts-ignore
-				properties: {
-					Series: { select: seriesSelect },
-					Republished: { select: republishedSelect },
-					Sites: { multi_select: sites },
-					Tags: { multi_select: tags },
-					'Canonical URL': { url: canonicalUrl },
-					Brief: { rich_text: brief },
-					Name: { title },
-				},
-			} = result;
-			// @ts-ignore
-			const coverImage = cover?.external?.url;
-			// @ts-ignore
-			const series = seriesSelect?.name;
-			// @ts-ignore
-			const republished = republishedSelect?.name;
-
-			return {
-				id,
-				title: title.reduce(
-					(acc: string, val: { plain_text: string }) =>
-						acc + val.plain_text,
-					''
-				) as string,
-				coverImage: coverImage ?? '',
-				series: series ?? '',
-				sites: sites.map((site: any) => site.name) as Array<string>,
-				tags: tags.map((tag: any) => tag.name) as Array<string>,
-				canonicalUrl: canonicalUrl as string,
-				republished: republished === 'true' ? true : false,
-				brief: brief.reduce(
-					(acc: string, val: { plain_text: string }) =>
-						acc + val.plain_text,
-					''
-				) as string,
-			};
-		});
+		const pages = await this.getPage('Scheduled', true);
+		const properties = pages.results.map(result =>
+			this.getPageDetails(result)
+		);
 
 		const ids = properties.map(property => property.id);
 		const data: Array<string> = [];
