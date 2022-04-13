@@ -1,16 +1,15 @@
 import { Client } from '@notionhq/client';
-import {
+import type {
 	ListBlockChildrenResponse,
 	QueryDatabaseResponse,
 	SearchResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 
+import type {
+	NotionClientType,
+	PagePropertiesType,
+} from '../types/NotionTypes';
 import { Block, getDate } from './utils';
-
-type NotionClientType = {
-	auth: string;
-	database_id: string;
-};
 
 class NotionClient {
 	private notion: Client;
@@ -21,18 +20,7 @@ class NotionClient {
 		this.database_id = client.database_id;
 	}
 
-	async getPublished(): Promise<
-		Array<{
-			id: string;
-			title: string;
-			coverImage: any;
-			republished: boolean;
-			brief: string;
-			tags: Array<string>;
-			series: any;
-			canonicalUrl: string;
-		}>
-	> {
+	async getPublished(): Promise<Array<PagePropertiesType>> {
 		const pages = await this.getPage('Published');
 		const properties = pages.results.map(result =>
 			this.getPageDetails(result)
@@ -40,18 +28,7 @@ class NotionClient {
 		return properties;
 	}
 
-	async getDraft(): Promise<
-		Array<{
-			id: string;
-			title: string;
-			coverImage: any;
-			republished: boolean;
-			brief: string;
-			tags: Array<string>;
-			series: any;
-			canonicalUrl: string;
-		}>
-	> {
+	async getDraft(): Promise<Array<PagePropertiesType>> {
 		const pages = await this.getPage('Draft');
 		const properties = pages.results.map(result =>
 			this.getPageDetails(result)
@@ -59,18 +36,7 @@ class NotionClient {
 		return properties;
 	}
 
-	async getScheduled(): Promise<
-		Array<{
-			id: string;
-			title: string;
-			coverImage: any;
-			republished: boolean;
-			brief: string;
-			tags: Array<string>;
-			series: any;
-			canonicalUrl: string;
-		}>
-	> {
+	async getScheduled(): Promise<Array<PagePropertiesType>> {
 		const pages = await this.getPage('Scheduled');
 		const properties = pages.results.map(result =>
 			this.getPageDetails(result)
@@ -98,17 +64,7 @@ class NotionClient {
 		};
 	}
 
-	private getPageDetails(result: any): {
-		id: string;
-		title: string;
-		coverImage: string;
-		series: string;
-		sites: Array<string>;
-		tags: Array<string>;
-		canonicalUrl: string;
-		republished: boolean;
-		brief: string;
-	} {
+	private getPageDetails(result: any): PagePropertiesType {
 		const {
 			id,
 			cover,
@@ -179,19 +135,7 @@ class NotionClient {
 		return pages;
 	}
 
-	async getObject(): Promise<
-		Array<{
-			id: string;
-			title: string;
-			coverImage: any;
-			republished: boolean;
-			brief: string;
-			tags: Array<string>;
-			series: any;
-			canonicalUrl: string;
-			content: string;
-		}>
-	> {
+	async getObject(): Promise<Array<PagePropertiesType>> {
 		const pages = await this.getPage('Scheduled', true);
 		const properties = pages.results.map(result =>
 			this.getPageDetails(result)
@@ -258,18 +202,6 @@ const notion = new NotionClient({
 	database_id: process.env.NOTION_DATABASE_ID as string,
 });
 
-export const MarkDown = async (): Promise<
-	Array<{
-		id: string;
-		title: string;
-		coverImage: any;
-		republished: boolean;
-		brief: string;
-		tags: Array<string>;
-		series: any;
-		canonicalUrl: string;
-		content: string;
-	}>
-> => {
+export const MarkDown = async (): Promise<Array<PagePropertiesType>> => {
 	return notion.getObject();
 };
