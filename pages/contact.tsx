@@ -1,61 +1,7 @@
 import type { NextPage } from 'next';
 import { useState, ChangeEvent, FormEvent } from 'react';
 
-type InputProps = {
-	label: string;
-	htmlFor: string;
-	value: string;
-	onChange: (e: any) => void;
-	type: 'text' | 'select' | 'textarea';
-};
-
-const Input = (options: InputProps) => {
-	const { label, htmlFor, type, value, onChange, ...props } = options;
-	return (
-		<>
-			<label htmlFor={htmlFor} className='mt-4 font-semibold mb-0.5'>
-				{label}
-			</label>
-			{type === 'text' ? (
-				<input
-					className='p-2 transition duration-300 px-3 text-sm focus:border-black outline-none border-2 border-slate-400 rounded-md'
-					name={htmlFor}
-					id={htmlFor}
-					value={value}
-					onChange={onChange}
-					placeholder={`Enter ${label}`}
-					{...props}
-				/>
-			) : type === 'textarea' ? (
-				<textarea
-					className='p-2 transition duration-300 px-3 text-sm focus:border-black outline-none border-2 border-slate-400 rounded-md resize-none'
-					name={htmlFor}
-					id={htmlFor}
-					value={value}
-					onChange={onChange}
-					rows={5}
-					placeholder={`Enter ${label}`}
-					{...props}
-				/>
-			) : (
-				<select
-					value={value}
-					name={htmlFor}
-					id={htmlFor}
-					onChange={onChange}
-					className='p-2 border-r-8 border-transparent font-raleway transition duration-300 text-sm focus:ring-black ring-2 ring-slate-400 outline-none bg-white rounded-md'
-					{...props}
-				>
-					<option value='' disabled>
-						Select the {htmlFor}
-					</option>
-					<option value='Query'>Query</option>
-					<option value='Feedback'>Feedback</option>
-				</select>
-			)}
-		</>
-	);
-};
+import Input from '@components/input';
 
 const Contact: NextPage = () => {
 	const [form, setForm] = useState<{
@@ -105,51 +51,54 @@ const Contact: NextPage = () => {
 
 	return (
 		<div className='font-raleway w-full bg-black flex justify-center min-h-screen items-center'>
-			<div className='md:w-2/3 md:rounded-xl w-full bg-white flex justify-center flex-col lg:flex-row items-start'>
-				<div className='lg:w-1/2 w-full flex h-full flex-col p-5 pb-0'>
-					<h1 className='font-dm text-center lg:text-8xl text-3xl font-bold lg:text-left'>
+			<div className='md:w-2/3 md:rounded-xl w-full bg-white flex justify-center flex-col items-center'>
+				<div className='flex h-full w-full flex-col p-5 pb-0'>
+					<h1 className='font-dm text-center lg:text-4xl text-3xl font-bold'>
 						Contact Us
 					</h1>
-					<h3 className='text-gray-500 mb-3 font-dm lg:text-3xl text-center lg:text-left'>
+					<h3 className='text-gray-400 mb-3 font-dm lg:text-xl text-center'>
 						We are here for you! How can we help?
 					</h3>
 				</div>
 				<form
 					onSubmit={handleSubmit}
-					className='flex flex-col w-full lg:w-1/2 p-5 pt-0'
+					className='flex flex-col w-full md:w-2/3 p-5 pt-0'
 				>
 					<Input
 						label='Name'
 						htmlFor='name'
+						// @ts-ignore
 						value={form.name}
 						onChange={handleInput}
-						type='text'
+						tag='input'
 					/>
 					<Input
 						label='Email'
 						htmlFor='email'
+						// @ts-ignore
 						value={form.email}
 						onChange={handleInput}
-						type='text'
-						// @ts-ignore
+						tag='input'
 						required
 					/>
 					<Input
 						label='Type'
 						htmlFor='type'
+						// @ts-ignore
 						value={form.type}
 						onChange={handleInput}
-						type='select'
+						tag='select'
 					/>
 					<Input
 						label='Message'
 						htmlFor='message'
+						// @ts-ignore
 						value={form.message}
 						onChange={handleInput}
-						type='textarea'
+						tag='textarea'
 					/>
 					<button
-						className='p-2 hover:scale-105 transition duration-300 rounded-lg mt-4 bg-black text-lg text-white flex items-center justify-center'
+						className='p-2 hover:scale-[1.02] transition duration-300 rounded-lg mt-4 bg-black text-lg text-white flex items-center justify-center'
 						type='submit'
 					>
 						{isSending ? (
