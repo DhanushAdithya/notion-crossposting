@@ -3,12 +3,12 @@ import type {
 	CreateStoryResponse,
 	CreateStoryType,
 	UserResponse,
-} from '../types/HashnodeTypes';
+} from 'types/HashnodeTypes';
 import {
 	userQuery,
 	createStory,
 	createPublicationStory,
-} from '../types/HashnodeTypes';
+} from 'types/HashnodeTypes';
 import { HASHNODE_API_ENDPOINT } from './constants';
 
 export class HashnodeClient {

@@ -5,7 +5,7 @@ import type {
 	PostResponse,
 	PublicationResponse,
 	ContributionResponse,
-} from '../types/MediumTypes';
+} from 'types/MediumTypes';
 import { MEDIUM_API_ENDPOINT } from './constants';
 
 export class MediumClient {

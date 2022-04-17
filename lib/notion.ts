@@ -5,13 +5,10 @@ import type {
 	SearchResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 
-import type {
-	NotionClientType,
-	PagePropertiesType,
-} from '../types/NotionTypes';
+import type { NotionClientType, PagePropertiesType } from 'types/NotionTypes';
 import { Block, getDate } from './utils';
 
-class NotionClient {
+export class NotionClient {
 	private notion: Client;
 	private database_id: string;
 
@@ -59,8 +56,13 @@ class NotionClient {
 
 		return {
 			id: database.id,
-			// @ts-ignore
-			title: database.title.reduce((acc, val) => acc + val.plain_text, ''),
+			title:
+				'title' in database
+					? database.title.reduce(
+							(acc: string, val) => acc + val.plain_text,
+							''
+					  )
+					: '',
 		};
 	}
 
